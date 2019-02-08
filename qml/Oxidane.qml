@@ -9,10 +9,15 @@ ApplicationWindow
     property var song: "♪"
     property var art: ""
     property var offset: 0
+    property var playpause: function() {}
     initialPage: Component { FirstPage { rootwindow:appWindow } }
     cover: Qt.resolvedUrl("cover/CoverPage.qml")
     allowedOrientations: Orientation.All
     _defaultPageOrientations: Orientation.All
+
+    // function playpause() {
+    // 	initialPage.page.playpause()
+    // }
 }
 
 

@@ -12,6 +12,12 @@ Page {
     property var rootwindow;
     id: page
 
+    Component.onCompleted: {
+        appWindow.playpause = function() {
+            page.playpause()
+        }
+    }
+
     function playSong (i) {
         py.call('backend.setSong', [songlist[i][0]], function(result){})
         appWindow.song = songlist[i][1]
@@ -44,9 +50,27 @@ Page {
     }
 
     function update_state(state, offset, index) {
-        appWindow.state = state.toLowerCase()
-        appWindow.offset = offset
-        page.currentIndex = index
+        if (songlist && songlist[0][8]=="spot") {
+            appWindow.state = state.toLowerCase()
+            appWindow.offset = offset
+            page.currentIndex = index
+        }
+    }
+
+    function playpause() {
+        if (songlist.length > 0) {
+            if (songlist[currentIndex][8]=="spot") {
+                py.call('backend.pause_spot', [], function(){})
+            } else {
+                if (mediaplayer.playbackState==MediaPlayer.PlayingState) {
+                    mediaplayer.pause()
+                    appWindow.state="paused"
+                } else {
+                    mediaplayer.play()
+                    appWindow.state="playing"
+                }
+            }
+        }
     }
 
     SilicaFlickable {
@@ -231,6 +255,21 @@ Page {
             console.log("fixing damn mediaplayer position")
             mediaplayer.seek(offset)
         }
+    }
+    Timer {
+        id: bufferTimer
+        interval: 20
+        running: false
+        repeat: true
+        onTriggered: {
+            if (mediaplayer.bufferProgress>=1.0) {
+                mediaplayer.play()
+                bufferTimer.running = false
+            }
+        }
+    }
+    function queueMedia() {
+        bufferTimer.restart()
     }
     MediaPlayer {
         id: mediaplayer

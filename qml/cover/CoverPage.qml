@@ -19,6 +19,7 @@ CoverBackground {
             onTriggered: {
                 console.log("Cover action triggered")
                 console.log(appWindow.state)
+                appWindow.playpause()
             }
         }
     }
