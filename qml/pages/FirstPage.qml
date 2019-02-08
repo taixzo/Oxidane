@@ -43,6 +43,12 @@ Page {
         }
     }
 
+    function update_state(state, offset, index) {
+        appWindow.state = state.toLowerCase()
+        appWindow.offset = offset
+        page.currentIndex = index
+    }
+
     SilicaFlickable {
         anchors.fill: parent
         PullDownMenu {
@@ -201,6 +207,7 @@ Page {
                     })
                 })
             });
+            setHandler('update_state', page.update_state)
 
         }
     }

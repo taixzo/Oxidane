@@ -8,6 +8,7 @@ ApplicationWindow
     property var state: "paused"
     property var song: "♪"
     property var art: ""
+    property var offset: 0
     initialPage: Component { FirstPage { rootwindow:appWindow } }
     cover: Qt.resolvedUrl("cover/CoverPage.qml")
     allowedOrientations: Orientation.All

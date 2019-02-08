@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # import easywebdav
+import pyotherside
 import re
 import urllib
 from urllib.request import urlretrieve
@@ -14,71 +15,6 @@ import http.server
 import socketserver
 import pyspotinterface
 
-'''class RemoteServer:
-	def __init__(self, host, protocol, username, password):
-		self.host = host
-		self.protocol = protocol
-		self.port = 443 if protocol=='https' else 80
-		self.path = "remote.php/webdav/"
-		self.username = username
-		self.password = password
-		self.dav = None
-		self.audio_list = []
-		self.audio_dict = {}
-	def connect(self):
-		self.dav = easywebdav.connect(
-			self.host,
-			port=self.port,
-			protocol=self.protocol,
-			username=self.username,
-			password=self.password,
-			path=self.path)
-	def scan(self, dir='/'):
-		dirlisting = self.dav.ls(dir)
-		for i in dirlisting[1:]:
-			if i.name.endswith('/'):
-				self.scan(i.name.replace('/'+self.path, '/', 1))
-			elif i.contenttype in ['audio/mpeg']:
-				self.audio_list.append(i.name.replace('/'+self.path, '/', 1))
-				print(i.name.replace('/'+self.path, '/', 1))
-	def parse_audio(self):
-		for j in self.audio_list:
-			i = urllib.parse.unquote(j)
-			segments = i.split('/')
-			try:
-				# if '-' in segments[-2]:
-				# 	artist, album = [k.strip() for k in segments[-2].split('-')][:2]
-				# 	name = segments[-1].split('.mp3')[0]
-				# else:
-					artist = segments[-3]
-					album = segments[-2]
-					name = segments[-1].split('.mp3')[0]
-			except IndexError:
-				if '-' in segments[-1]:
-					parts = segments[-1].split('-')
-					if len(parts) == 3:
-						artist, album, name = parts
-					elif len(parts) == 2:
-						artist, name = parts
-						album = ""
-					elif len(parts) > 3:
-						artist = parts[0]
-						album = parts[1]
-						name = '-'.join(parts[2:])
-					else:
-						if ',' in segments[-1]:
-							artist, name = segments[-1].split(',',num=1)
-							album = ''
-						else:
-							artist, album = '', ''
-							name = segments[-1]
-				name = name.split('.mp3')[0]
-			name = re.sub(r'(^[\w\- ]*\d+ ?[-.]? ?)', '', name)
-			name = re.sub('_',' ', name)
-			artist = artist.title().strip()
-			album = album.title().strip()
-			name = name.title().strip()
-			self.audio_dict[j] = {'name':name, 'artist':artist, 'album':album}'''
 
 server = None
 
@@ -168,6 +104,7 @@ def setupoc(serverurl=None, username=None, password=None):
 def setupspot():
 	spot_playlists = pyspotinterface.get_playlists(pyspotinterface.username)
 	splists = [(i['id'], i['name'], 'spot') for i in spot_playlists]
+	pyspotinterface.thread_updates(spot_update)
 	return splists
 
 def search(search_string):
@@ -185,7 +122,7 @@ def loadPlaylist(pid, ptype):
 		return [(i.id, i.title, i.artist, i.url, i.art, i.albumid, i.time, int(i.bitrate)*float(i.time)/8, 'oc') for i in songs]
 	elif ptype=="spot":
 		songs = pyspotinterface.get_songs_from_playlist(pyspotinterface.username, pid)
-		return [(i['id'], i['name'], i['artist'], i['art'], i['albumid'], i['duration_ms']/1000, 0, 'spot') for i in songs]
+		return [(i['id'], i['name'], i['artist'], "", i['art'], i['albumid'], i['duration_ms']/1000, 0, 'spot') for i in songs]
 
 def setSong(sid):
 	global currentsong
@@ -247,6 +184,17 @@ def check_transfers():
 	for doomed in reversed(to_delete):
 		del transfers[doomed]
 		print("Deleting empty transfer")
+
+def play_spot(sid):
+	pyspotinterface.play_song(sid)
+
+def play_spot_playlist(playlist, index):
+	pyspotinterface.playlist = [{'id':i[0], 'name':i[1], 'artist':i[2]} for i in playlist]
+	pyspotinterface.pointer = int(index)
+	pyspotinterface.play_song_from_playlist()
+
+def spot_update(state, offset, index):
+	pyotherside.send('update_state', state, offset, index)
 
 def press(number):
     number +=1

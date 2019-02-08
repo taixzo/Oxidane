@@ -26,6 +26,7 @@ Page {
                 albumid: songlist[i][5],
                 duration: songlist[i][6]*1000,
                 filesize: songlist[i][7],
+                src: songlist[i][8],
                 index: i
             })
         }
@@ -55,7 +56,7 @@ Page {
                     appWindow.state="playing"
                     appWindow.song=value
                     py.call('backend.setSong', [sid], function(result){})
-                    if (1) {
+                    if (src=="oc") {
                         py.call('backend.downloadSong', [url, sid, art, albumid, filesize], function(result) {
                             if (page.startsWith(result[0], "%%%ERROR")) {
                                 var errno = result[0].split("|")[1]
@@ -72,13 +73,11 @@ Page {
                                 mediaplayer.play()
                             }
                         })
-                    } else {
-                        mediaplayer.source = url
-                        mediaplayer.play()
-                        appWindow.art=art
-                        // albumart.source = art
-                        // songname.text = value
-                        // artistname.text = artist
+                    } else if (src=="spot") {
+                        py.call("backend.play_spot_playlist", [songlist, index], function() {
+                            songLoadingIndicator.running = false
+                            appWindow.art = songlist[index][4]
+                        })
                     }
                 }
             }
@@ -116,7 +115,7 @@ Page {
             width: parent.width * 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             maximumValue: duration
-            value: mediaplayer.position
+            value: songlist[parentpage.currentIndex][8]=="spot" ? appWindow.offset : mediaplayer.position
         }
         Row {
             id: controlrow
@@ -149,8 +148,10 @@ Page {
                 id: playbutton
                 width: controlrow.itemwidth
                 anchors.verticalCenter: parent.verticalCenter
-                icon.source: mediaplayer.playbackState==MediaPlayer.PlayingState ? "image://theme/icon-l-pause"
-                                                                                 : "image://theme/icon-l-play"
+                // icon.source: mediaplayer.playbackState==MediaPlayer.PlayingState ? "image://theme/icon-l-pause"
+                //                                                                  : "image://theme/icon-l-play"
+                icon.source: appWindow.state=="playing" ? "image://theme/icon-l-pause"
+                                                        : "image://theme/icon-l-play"
 
 
                 BusyIndicator {

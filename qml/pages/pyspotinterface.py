@@ -59,8 +59,13 @@ def get_songs_from_playlist(username, id):
 		parse_tracks(stracks, tracks)
 	return tracks
 
+def play_song(sid):
+	audioresource.acquire(callback)
+	spot.stop()
+	spot.play(sid)
+
 def play_song_from_playlist():
-	audioresource.acquire()
+	audioresource.acquire(callback)
 	spot.stop()
 	spot.play(playlist[pointer]["id"])
 	print ("Playing %s - %s" % (playlist[pointer]['artist'], playlist[pointer]['name']))
@@ -95,7 +100,7 @@ def pause():
 		spot.pause()
 		pystate = "Paused"
 	elif pystate=="Paused":
-		audioresource.acquire()
+		audioresource.acquire(callback)
 		spot.resume()
 		pystate = "Playing"
 
@@ -116,7 +121,7 @@ def check_updates(fn):
 		elif state=="Playing":
 			pystate="Playing"
 		if fn is not None:
-			fn(state, offset)
+			fn(state, offset, pointer)
 
 def thread_updates(fn=None):
 	upd_thread = threading.Thread(target=check_updates, args=(fn,))
