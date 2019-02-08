@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import QtMultimedia 5.4
+import QtQml 2.2
 
 Page {
     id: page
@@ -177,17 +178,30 @@ Page {
             width: parent.width * 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             maximumValue: duration
-            value: songlist[parentpage.currentIndex][8]=="spot" ? appWindow.offset : mediaplayer.position
+            property bool gotPosition: true
+            property var oldval: 0
+            // property var name
+            // value: songlist[parentpage.currentIndex][8]=="spot" ? appWindow.offset : mediaplayer.position
             onValueChanged: {
                 if (pressed) {
+                    gotPosition = false
+                    oldval = value
+                } else if(gotPosition==false) {
+                    gotPosition = true
                     console.log(value)
                     if (songlist[parentpage.currentIndex][8]=="spot") {
-                        py.call('backend.seek_spot', [value], function(){})
+                        py.call('backend.seek_spot', [oldval], function(){})
                     } else {
-                        mediaplayer.seek(value)
+                        mediaplayer.seek(oldval)
                     }
                 }
             }
+        }
+        Binding {
+            target: trackposition
+            property: "value"
+            value: trackposition.pressed ? trackposition.value
+                                         : (songlist[parentpage.currentIndex][8]=="spot" ? appWindow.offset : mediaplayer.position)
         }
         Row {
             id: controlrow

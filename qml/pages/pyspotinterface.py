@@ -108,7 +108,7 @@ def pause():
 
 def seek(position):
 	print ("Seeking to %i" % int(position))
-	# spot.seek(int(position))
+	spot.seek(playlist[pointer]["id"], int(position))
 	# spot.resume()
 
 def callback(is_acquired):
