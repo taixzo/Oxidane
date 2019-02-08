@@ -21,6 +21,7 @@ server = None
 ROOT_CACHE = os.path.expanduser('~')+'/.cache/oxidane/'
 TMP_CACHE = '/tmp/oxidane/'
 AUDIO_CACHE = ROOT_CACHE + 'audio/'
+SPOT_AUDIO_CACHE = AUDIO_CACHE + 'spot/'
 ART_CACHE = ROOT_CACHE + 'art/'
 TMP_AUDIO_CACHE = TMP_CACHE + 'audio/'
 TMP_ART_CACHE = TMP_CACHE + 'art/'
@@ -43,7 +44,7 @@ class FixedHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 	def do_GET(self):
 		remote_url, local_url = self.send_head() 
 		if remote_url:
-			copyfiles(urllib.urlopen(remote_url), [self.wfile, local_url])
+			copyfiles(remote_url, [self.wfile, local_url])
 		elif local_url:
 			self.copyfile(local_url, self.wfile)
 
@@ -62,7 +63,8 @@ class FixedHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 			return None, f
 		else:
 			try:
-				url = http_mappings[path]
+				url = http_mappings[path][0]
+				print (url)
 				req = urllib.request.urlopen(url)
 				self.send_response(200)
 				self.send_header("Content-Type", req.headers['Content-Type'])
@@ -71,6 +73,7 @@ class FixedHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 				self.end_headers()
 				return req, open(TMP_AUDIO_CACHE+path, 'wb')
 			except urllib.error.HTTPError as e:
+				print (e.msg)
 				self.send_error(e.code, e.msg)
 				return None, None
 
@@ -89,6 +92,7 @@ def setupoc(serverurl=None, username=None, password=None):
 	if not os.path.exists(ROOT_CACHE):
 		os.makedirs(ROOT_CACHE)
 		os.mkdir(AUDIO_CACHE)
+		os.mkdir(SPOT_AUDIO_CACHE)
 		os.mkdir(ART_CACHE)
 	if not os.path.exists(TMP_CACHE):
 		os.makedirs(TMP_CACHE)
@@ -187,6 +191,21 @@ def check_transfers():
 
 def play_spot(sid):
 	pyspotinterface.play_song(sid)
+
+def pause_spot():
+	print ('pausing')
+	pyspotinterface.pause()
+
+def prev_spot():
+	print ('preving')
+	pyspotinterface.play_prev()
+
+def next_spot():
+	print ('nexting')
+	pyspotinterface.play_next()
+
+def seek_spot(position):
+	pyspotinterface.seek(position)
 
 def play_spot_playlist(playlist, index):
 	pyspotinterface.playlist = [{'id':i[0], 'name':i[1], 'artist':i[2]} for i in playlist]

@@ -31,11 +31,61 @@ Page {
             })
         }
     }
+    StateGroup {
+        states: [
+            State {
+                when: (page.width / page.height) < 1
+                AnchorChanges {
+                    target: songs;
+                    anchors.top: page.top;
+                    anchors.bottom: controls.top;
+                    anchors.left: page.left;
+                    anchors.right: page.right;
+                }
+                AnchorChanges {
+                    target: controls;
+                    // anchors.top: page.verticalCenter;
+                    // anchors.top: page.verticalCenter;
+                    // anchors.top: page.height / 3
+                    // anchors.topMargin: page.height / 6
+                    anchors.bottom: page.bottom
+                    anchors.right: page.right
+                    anchors.left: page.left
+                }
+                PropertyChanges {
+                    target: controls;
+                    height: controls.visible? page.height/3 : 1
+                }
+            },
+            State {
+                when: (page.width / page.height) > 1
+                AnchorChanges {
+                    target: songs;
+                    anchors.top: page.top;
+                    anchors.bottom: page.bottom;
+                    anchors.left: page.left;
+                    anchors.right: controls.left;
+                }
+                AnchorChanges {
+                    target: controls;
+                    // anchors.top: page.top
+                    // anchors.topMargin: 0
+                    anchors.bottom: page.bottom
+                    anchors.right: page.right
+                    anchors.left: page.horizontalCenter
+                }
+                PropertyChanges {
+                    target: controls;
+                    height: page.height
+                }
+            }
+        ]
+    }
     SilicaListView {
         id: songs
-        width: parent.width
-        anchors.top: parent.top
-        anchors.bottom: controls.bottom
+        // width: parent.width
+        // anchors.top: parent.top
+        // anchors.bottom: controls.top
         VerticalScrollDecorator {
             flickable: songs
         }
@@ -70,7 +120,8 @@ Page {
                                 }
                                 appWindow.art = songlist[index][4]
                                 mediaplayer.seek(0)
-                                mediaplayer.play()
+                                // mediaplayer.play()
+                                parentpage.queueMedia()
                             }
                         })
                     } else if (src=="spot") {
@@ -105,31 +156,53 @@ Page {
     }
     Column {
         id: controls
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: parent.height/3
+        // anchors.bottom: parent.bottom
+        // width: parent.width
+        // height: parent.height/3
         visible: false
 
+        Image {
+            id: bigalbumart
+            visible: page.width > page.height
+            anchors.horizontalCenter: parent.horizontalCenter
+            // visible: false
+            // width: Theme.itemSizeSmall
+            // height: Theme.itemSizeSmall
+            width: parent.height/2
+            height: parent.height/2
+            source: parentpage.songlist[parentpage.currentIndex][4]
+        }
         Slider {
             id: trackposition
             width: parent.width * 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             maximumValue: duration
             value: songlist[parentpage.currentIndex][8]=="spot" ? appWindow.offset : mediaplayer.position
+            onValueChanged: {
+                if (pressed) {
+                    console.log(value)
+                    if (songlist[parentpage.currentIndex][8]=="spot") {
+                        py.call('backend.seek_spot', [value], function(){})
+                    } else {
+                        mediaplayer.seek(value)
+                    }
+                }
+            }
         }
         Row {
             id: controlrow
             width: parent.width
-            property real itemwidth: width/4
+            property real itemwidth: page.width < page.height ? width/4 : width/3
 
             Image {
                 id: albumart
                 anchors.leftMargin: Theme.itemSizeSmall / 2
+                visible: page.width < page.height
                 // width: Theme.itemSizeSmall
                 // height: Theme.itemSizeSmall
                 width: controlrow.itemwidth
                 height: controlrow.itemwidth
-                source: parentpage.songlist[parentpage.currentIndex][4]
+                source: appWindow.art//parentpage.songlist[parentpage.currentIndex][4]
             }
 
             IconButton {
@@ -137,10 +210,15 @@ Page {
                 anchors.verticalCenter: parent.verticalCenter
                 icon.source: "image://theme/icon-m-previous"
                 onClicked: {
-                    if (mediaplayer.position<5000 && parentpage.currentIndex>0) {
+                    if (songlist[parentpage.currentIndex][8]=="spot") {
+                        py.call('backend.prev_spot', [], function(){})
                         page.parentpage.currentIndex -= 1
+                    } else {
+                        if (mediaplayer.position<5000 && parentpage.currentIndex>0) {
+                            page.parentpage.currentIndex -= 1
+                        }
+                        parentpage.playSong(parentpage.currentIndex)
                     }
-                    parentpage.playSong(parentpage.currentIndex)
                 }
             }
 
@@ -161,12 +239,16 @@ Page {
                     size: BusyIndicatorSize.Large
                 }
                 onClicked: {
-                    if (mediaplayer.playbackState==MediaPlayer.PlayingState) {
-                        mediaplayer.pause()
-                        appWindow.state="paused"
+                    if (songlist[parentpage.currentIndex][8]=="spot") {
+                        py.call('backend.pause_spot', [], function(){})
                     } else {
-                        mediaplayer.play()
-                        appWindow.state="playing"
+                        if (mediaplayer.playbackState==MediaPlayer.PlayingState) {
+                            mediaplayer.pause()
+                            appWindow.state="paused"
+                        } else {
+                            mediaplayer.play()
+                            appWindow.state="playing"
+                        }
                     }
                 }
             }
@@ -176,8 +258,12 @@ Page {
                 anchors.verticalCenter: parent.verticalCenter
                 icon.source: "image://theme/icon-m-next"
                 onClicked: {
-                    page.parentpage.currentIndex += 1
-                    parentpage.playSong(page.parentpage.currentIndex)
+                    if (songlist[parentpage.currentIndex][8]=="spot") {
+                        py.call('backend.next_spot', [], function(){})
+                    } else {
+                        page.parentpage.currentIndex += 1
+                        parentpage.playSong(page.parentpage.currentIndex)
+                    }
                 }
             }
         }

@@ -73,25 +73,27 @@ def play_song_from_playlist():
 def play_next():
 	global pointer
 	global pystate
+	pystate="Stopped"
 	pointer += 1
 	if pointer < len(playlist):
-		pystate="Stopped"
 		play_song_from_playlist()
 		time.sleep(0.2)
 		pystate="Playing"
 	else:
 		pointer = 0
-		pystate="Stopped"
+		# pystate="Stopped"
 
 def play_prev():
 	global pointer
 	global pystate
+	pystate="Stopped"
 	pointer -= 1
 	if pointer >= 0 and playlist:
 		play_song_from_playlist()
+		time.sleep(0.2)
+		pystate="Playing"
 	else:
 		pointer = 0
-		pystate="Stopped"
 
 def pause():
 	global pystate
@@ -104,7 +106,13 @@ def pause():
 		spot.resume()
 		pystate = "Playing"
 
+def seek(position):
+	print ("Seeking to %i" % int(position))
+	# spot.seek(int(position))
+	# spot.resume()
+
 def callback(is_acquired):
+	global pystate
 	if is_acquired:
 		pass
 	elif pystate=="Playing":
@@ -113,6 +121,7 @@ def callback(is_acquired):
 
 def check_updates(fn):
 	global pystate
+	global pointer
 	while True:
 		time.sleep(0.1)
 		state, offset = spot.get_state()
