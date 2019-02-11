@@ -179,8 +179,12 @@ def check_transfers():
 		if "art" in transfer:
 			retval = transfer['art'].poll()
 			if retval is not None:
-				# TODO: do something clever with errors?
-				subprocess.check_call(['mv', TMP_ART_CACHE+transfer['albumid'], ART_CACHE+transfer['albumid']])
+				try:
+					subprocess.check_call(['mv', TMP_ART_CACHE+transfer['albumid'], ART_CACHE+transfer['albumid']])
+				except:
+					# So we have a failure to cache the art. It's not the end of the world.
+					if transfer['albumid'] in os.listdir(TMP_ART_CACHE):
+						os.remove(TMP_ART_CACHE+transfer['albumid'])
 				del transfer['art']
 				del transfer['albumid']
 		if not transfer:
