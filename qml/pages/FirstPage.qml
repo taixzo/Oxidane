@@ -42,7 +42,8 @@ Page {
         } else {
             mediaplayer.source = songlist[i][3]
             mediaplayer.seek(0)
-            mediaplayer.play()
+            page.queueMedia()
+            // mediaplayer.play()
             // albumart.source = songlist[i][4]
             // songname.text = songlist[i][1]
             // artistname.text = songlist[i][2]
@@ -54,6 +55,8 @@ Page {
             appWindow.state = state.toLowerCase()
             appWindow.offset = offset
             page.currentIndex = index
+            appWindow.song = songlist[index][1]
+            appWindow.art = songlist[index][4]
         }
     }
 
@@ -264,6 +267,7 @@ Page {
         onTriggered: {
             if (mediaplayer.bufferProgress>=1.0) {
                 mediaplayer.play()
+                appWindow.state="playing"
                 bufferTimer.running = false
             }
         }
@@ -293,6 +297,8 @@ Page {
                 console.log("Position: "+curpos)
                 fixthemusicTimer.offset = curpos
                 fixthemusicTimer.restart()
+            } else if (mediaplayer.playbackState==MediaPlayer.PausedState) {
+                appWindow.state = "paused"
             }
         }
     }
